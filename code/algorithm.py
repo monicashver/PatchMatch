@@ -88,14 +88,64 @@ def propagation_and_random_search(source_patches, target_patches,
     #############################################
     ###  PLACE YOUR CODE BETWEEN THESE LINES  ###
     #############################################
-    # CC -> dot product between the vectors
-    # NCC -> angle between the vectors
-    # RMS -> length of vector joining the 2 vectors together
-    print(source_patches.shape)
-    print(f.shape)
+
+    ## PROPAGATION
+    #print(source_patches.shape)
+    #print(f.shape)
+    #print(target_patches.shape)
+    for i in range(1, source_patches.shape[0] - 1):
+        for j in range(1, source_patches.shape[1] - 1):
+
+            #D_original -> D(f(x,y))
+            #D_mod_x    -> D(f(x-1, y)) or D(f(x+1, y))
+            #D_mod_y    -> D(f(x, y-1)) or D(f(x, y+1))
+
+            v = f[i,j]
+            D_original_i, D_original_j = [i,j] + v
+
+            D_mod_x = None
+            D_mod_y = None
+            D_original = compute_D(source_patches[i,j], target_patches[D_original_i, D_original_j])
+
+            if(odd_iteration):
+                print("odd")
+                odd_v_x = f[i-1, j]
+                odd_v_y = f[i, j-1]
+
+                D_mod_x = compute_D(source_patches[i,j], target_patches[odd_v_x[0], odd_v_x[1]])
+                D_mod_y = compute_D(source_patches[i,j], target_patches[odd_v_y[0], odd_v_y[1]])
+
+                #new_f[i, j] = min(compute_D())
+            else:
+                print("even")
+                even_v_x = f[i+1, j]
+                even_v_y = f[i, j+1]
+
+                D_mod_x = compute_D(source_patches[i,j], target_patches[even_v_x[0], even_v_x[1]])
+                D_mod_y = compute_D(source_patches[i,j], target_patches[even_v_y[0], even_v_y[1]])
+
+            #f[i,j] = 
+            #print("Ds", D_mod_x, D_mod_x, D_original)
+        ## RANDOM SEARCH
     #############################################
 
     return new_f, best_D, global_vars
+
+def compute_D(sourcePatch, destinationPatch):
+# Calculation of the D value between vector 1 and 2
+# Gonna eventually try all 3 methods
+
+# Method 1:
+# CC -> dot product between the vectors
+    print(sourcePatch.shape, destinationPatch.shape)
+    print(np.multiply(sourcePatch, destinationPatch))
+    return np.sum(np.multiply(sourcePatch, destinationPatch))
+# Method 2:
+# NCC -> angle between the vectors
+
+# Method 3:
+# RMS -> length of vector joining the 2 vectors together
+
 
 
 # This function uses a computed NNF to reconstruct the source image
