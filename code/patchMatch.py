@@ -18,6 +18,7 @@ import cv2 as cv
 import numpy as np
 import time
 
+import os
 
 # A decorator function for elapsed-time profiling
 def profile(fn):
@@ -119,11 +120,11 @@ class PatchMatch:
             success, msg = False, 'Invalid key provided: ' + key
             
         #Check if given filename is valid
-        elif (not os.path.isfile(fileName)):
-            success, msg = False, 'Invalid filename provided: ' + fileName
+        elif (not os.path.isfile(filename)):
+            success, msg = False, 'Invalid filename provided: ' + filename
         else:
             #Attemp to load image
-            picture = cv.imread(fileName, cv.IMREAD_UNCHANGED)
+            picture = cv.imread(filename, cv.IMREAD_UNCHANGED)
             
             #imread failed
             if (type(picture) == None):
@@ -164,7 +165,7 @@ class PatchMatch:
         elif (type(data) == None):
             success, msg = False, 'There is no data in key: ' + key + 'to write'
         else:
-            cv.imwrite(fileName, data)
+            cv.imwrite(filename, data)
             success = True, 'Successfully wrote image'
 
         #########################################

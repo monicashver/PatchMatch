@@ -68,7 +68,15 @@ np.seterr(divide='ignore', invalid='ignore')
 #                            return them in this argument and they will be stored in the
 #                            PatchMatch data structure
 
+###
+# source activate open-cv-test
+###
 
+###
+# source_patches - contains all the patches from the source images in so weird ass format
+# source_patches[i,j,c,:] gives you the list of intensities for color channel c of
+# all pixels in the patch centered at pixel [i,j]]
+###
 def propagation_and_random_search(source_patches, target_patches,
                                   f, alpha, w,
                                   propagation_enabled, random_enabled,
@@ -80,8 +88,11 @@ def propagation_and_random_search(source_patches, target_patches,
     #############################################
     ###  PLACE YOUR CODE BETWEEN THESE LINES  ###
     #############################################
-
-
+    # CC -> dot product between the vectors
+    # NCC -> angle between the vectors
+    # RMS -> length of vector joining the 2 vectors together
+    print(source_patches.shape)
+    print(f.shape)
     #############################################
 
     return new_f, best_D, global_vars
