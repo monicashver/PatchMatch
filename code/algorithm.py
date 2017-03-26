@@ -13,6 +13,7 @@
 
 # import basic packages
 import numpy as np
+import random
 
 # basic numpy configuration
 
@@ -93,6 +94,12 @@ def propagation_and_random_search(source_patches, target_patches,
     #print(source_patches.shape)
     #print(f.shape)
     #print(target_patches.shape)
+
+    x_size = source_patches.shape[0]
+    y_size = source_patches.shape[1]
+
+    print("sizes", x_size, y_size)
+
     for i in range(1, source_patches.shape[0] - 1):
         for j in range(1, source_patches.shape[1] - 1):
 
@@ -101,32 +108,54 @@ def propagation_and_random_search(source_patches, target_patches,
             #D_mod_y    -> D(f(x, y-1)) or D(f(x, y+1))
 
             v = f[i,j]
+
             D_original_i, D_original_j = [i,j] + v
+            # print(D_original_i, D_original_j)
+
+            #if [i,j] + v is out of range - loop around
+            D_original_i, D_original_j = D_original_i %  x_size, D_original_j % y_size
 
             D_mod_x = None
             D_mod_y = None
             D_original = compute_D(source_patches[i,j], target_patches[D_original_i, D_original_j])
 
             if(odd_iteration):
-                print("odd")
+                #print("odd")
                 odd_v_x = f[i-1, j]
-                odd_v_y = f[i, j-1]
+                odd_v_y = f[i, j-1] 
 
-                D_mod_x = compute_D(source_patches[i,j], target_patches[odd_v_x[0], odd_v_x[1]])
-                D_mod_y = compute_D(source_patches[i,j], target_patches[odd_v_y[0], odd_v_y[1]])
+                D_mod_x = compute_D(source_patches[i,j], target_patches[odd_v_x[0] % x_size, odd_v_x[1] % y_size])
+                D_mod_y = compute_D(source_patches[i,j], target_patches[odd_v_y[0] % x_size, odd_v_y[1] % y_size])
 
-                #new_f[i, j] = min(compute_D())
             else:
-                print("even")
-                even_v_x = f[i+1, j]
-                even_v_y = f[i, j+1]
+               # print("even")
+                even_v_x = f[i+1, j] % x_size
+                even_v_y = f[i, j+1] % y_size
 
-                D_mod_x = compute_D(source_patches[i,j], target_patches[even_v_x[0], even_v_x[1]])
-                D_mod_y = compute_D(source_patches[i,j], target_patches[even_v_y[0], even_v_y[1]])
+                D_mod_x = compute_D(source_patches[i,j], target_patches[even_v_x[0] % x_size, even_v_x[1] % y_size])
+                D_mod_y = compute_D(source_patches[i,j], target_patches[even_v_y[0] % x_size, even_v_y[1] % y_size])
 
-            #f[i,j] = 
-            #print("Ds", D_mod_x, D_mod_x, D_original)
-        ## RANDOM SEARCH
+            #Update f(x,y) with best of the 3
+            f[i,j] = min(D_mod_x, D_mod_y, D_original)
+            
+            ## RANDOM SEARCH
+            #alpha - a fixed ratio between search window sizes
+            #w - large, max search radius
+
+            k = 0
+            while (((alpha ** k) * w ) >= 1):
+
+                #Ri is a uniform random sample from the continuous 2D range.
+                R = [np.random.uniform(-1,1), np.random.uniform(-1,1)]
+
+                #u vector from equation 1 in section 3.2 in Barnes paper
+                u = f[i,j] + np.multiply(w * (alpha ** k), R)
+
+                k += 1
+
+                #print("R", R, 'w', w, 'alpha', alpha)
+           
+
     #############################################
 
     return new_f, best_D, global_vars
@@ -137,8 +166,8 @@ def compute_D(sourcePatch, destinationPatch):
 
 # Method 1:
 # CC -> dot product between the vectors
-    print(sourcePatch.shape, destinationPatch.shape)
-    print(np.multiply(sourcePatch, destinationPatch))
+    #print(sourcePatch.shape, destinationPatch.shape)
+    #print(np.multiply(sourcePatch, destinationPatch))
     return np.sum(np.multiply(sourcePatch, destinationPatch))
 # Method 2:
 # NCC -> angle between the vectors
