@@ -106,7 +106,7 @@ def propagation_and_random_search(source_patches, target_patches,
             #D_original -> D(f(x,y))
             #D_mod_x    -> D(f(x-1, y)) or D(f(x+1, y))
             #D_mod_y    -> D(f(x, y-1)) or D(f(x, y+1))
-
+            #print("F", f[i,j])
             v = f[i,j]
 
             D_original_i, D_original_j = [i,j] + v
@@ -136,13 +136,16 @@ def propagation_and_random_search(source_patches, target_patches,
                 D_mod_y = compute_D(source_patches[i,j], target_patches[even_v_y[0] % x_size, even_v_y[1] % y_size])
 
             #Update f(x,y) with best of the 3
-            f[i,j] = min(D_mod_x, D_mod_y, D_original)
+            #print("Ds", D_mod_x, D_mod_y, D_original)
+            target_patches[D_original_i, D_original_j] = np.minimum(D_mod_x, D_mod_y, D_original)
+
             
             ## RANDOM SEARCH
             #alpha - a fixed ratio between search window sizes
             #w - large, max search radius
 
             k = 0
+            u = [0,0]
             while (((alpha ** k) * w ) >= 1):
 
                 #Ri is a uniform random sample from the continuous 2D range.
@@ -152,10 +155,11 @@ def propagation_and_random_search(source_patches, target_patches,
                 u = f[i,j] + np.multiply(w * (alpha ** k), R)
 
                 k += 1
-
                 #print("R", R, 'w', w, 'alpha', alpha)
+            f[i,j] = u
            
-
+    new_f = f
+    best_D = target_patches
     #############################################
 
     return new_f, best_D, global_vars
@@ -168,7 +172,7 @@ def compute_D(sourcePatch, destinationPatch):
 # CC -> dot product between the vectors
     #print(sourcePatch.shape, destinationPatch.shape)
     #print(np.multiply(sourcePatch, destinationPatch))
-    return np.sum(np.multiply(sourcePatch, destinationPatch))
+    return np.multiply(sourcePatch, destinationPatch)
 # Method 2:
 # NCC -> angle between the vectors
 
