@@ -98,6 +98,7 @@ def propagation_and_random_search(source_patches, target_patches,
     x_size = source_patches.shape[0]
     y_size = source_patches.shape[1]
 
+    best_D = np.zeros(source_patches.shape)
     print("sizes", x_size, y_size)
 
     for i in range(1, source_patches.shape[0] - 1):
@@ -137,8 +138,8 @@ def propagation_and_random_search(source_patches, target_patches,
 
             #Update f(x,y) with best of the 3
             #print("Ds", D_mod_x, D_mod_y, D_original)
-            target_patches[D_original_i, D_original_j] = np.minimum(D_mod_x, D_mod_y, D_original)
-
+            #target_patches[D_original_i, D_original_j] = np.minimum(D_mod_x, D_mod_y, D_original)
+            best_D[D_original_i, D_original_j] = np.minimum(D_mod_x, D_mod_y, D_original)
             
             ## RANDOM SEARCH
             #alpha - a fixed ratio between search window sizes
@@ -155,11 +156,11 @@ def propagation_and_random_search(source_patches, target_patches,
                 u = f[i,j] + np.multiply(w * (alpha ** k), R)
 
                 k += 1
-                #print("R", R, 'w', w, 'alpha', alpha)
+
             f[i,j] = u
            
     new_f = f
-    best_D = target_patches
+
     #############################################
 
     return new_f, best_D, global_vars
@@ -170,15 +171,16 @@ def compute_D(sourcePatch, destinationPatch):
 
 # Method 1:
 # CC -> dot product between the vectors
-    #print(sourcePatch.shape, destinationPatch.shape)
-    #print(np.multiply(sourcePatch, destinationPatch))
-    return np.multiply(sourcePatch, destinationPatch)
+
+    #return np.multiply(sourcePatch, destinationPatch)
+
 # Method 2:
 # NCC -> angle between the vectors
 
 # Method 3:
 # RMS -> length of vector joining the 2 vectors together
-
+    #return RMS of source and destination 
+    return np.sqrt(np.multiply(sourcePatch, destinationPatch)/destinationPatch.size)
 
 
 # This function uses a computed NNF to reconstruct the source image
@@ -205,17 +207,24 @@ def compute_D(sourcePatch, destinationPatch):
 def reconstruct_source_from_target(target, f):
     rec_source = None
 
-    print(target.shape)
-    print('fshape', f.shape)
-    print("F", f)
     #############################################
     ###  PLACE YOUR CODE BETWEEN THESE LINES  ###
     #############################################
-    #source (x,y) = target(x,y) + f(x,y)
-    rec_source = np.dot(target,f)
+
+    rec_source = np.zeros(target.shape)
+
+    for i in range(target.shape[0]):
+        for j in range(target.shape[1]):
+
+            #new (x,y) from f(i,j) offsets
+            x, y = i + f[i,j,0], j + f[i,j,1]
+
+            #update rec_source with target picture values
+            rec_source[i,j] = target[x, y]
 
     #############################################
 
+    print(rec_source)
     return rec_source
 
 
