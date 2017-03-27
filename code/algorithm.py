@@ -205,10 +205,14 @@ def compute_D(sourcePatch, destinationPatch):
 def reconstruct_source_from_target(target, f):
     rec_source = None
 
+    print(target.shape)
+    print('fshape', f.shape)
+    print("F", f)
     #############################################
     ###  PLACE YOUR CODE BETWEEN THESE LINES  ###
     #############################################
-
+    #source (x,y) = target(x,y) + f(x,y)
+    rec_source = np.dot(target,f)
 
     #############################################
 

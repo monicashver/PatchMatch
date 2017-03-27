@@ -10,7 +10,7 @@ location of each piece.
    algorithm operation):
 
 cd ../../code
-python viscomp.py --source ../test_images/jaguar2/source.jpg --target ../test_images/jaguar2/target.jpg --nnf-image --nnf-vectors --iters 0 --output ../results/jaguar2/jaguar2
+python viscomp.py --source ../test_images/jaguar2/source.png --target ../test_images/jaguar2/target.png --nnf-image --nnf-vectors --iters 0 --output ../results/jaguar2/jaguar2
 mv ../results/jaguar2/jaguar2.*.npy ../results/jaguar2/jaguar2.init.npy
 
 2. To test your reconstruct_source_from_target() function without having
@@ -18,7 +18,7 @@ mv ../results/jaguar2/jaguar2.*.npy ../results/jaguar2/jaguar2.init.npy
    the reference-computed NNF as your initial NNF:
 
 cd ../../code
-python viscomp.py --source ../test_images/jaguar2/source.jpg --target ../test_images/jaguar2/target.jpg --init-nnf ../results/jaguar2/jaguar2.reference.npy -iters 0 --rec-source --output ../results/jaguar2/jaguar2
+python viscomp.py --source ../test_images/jaguar2/source.png --target ../test_images/jaguar2/target.png --init-nnf ../results/jaguar2/jaguar2.init.npy -iters 0 --rec-source --output ../results/jaguar2/jaguar2
 
 3. To run patchmatch with the suggested parameters, your previously-computed
    initial NNF, and all intermediate results:
