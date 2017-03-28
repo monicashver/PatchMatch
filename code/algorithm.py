@@ -13,8 +13,9 @@
 
 # import basic packages
 import numpy as np
+np.set_printoptions(threshold=np.inf)
 import random
-
+import os
 # basic numpy configuration
 
 # set random seed
@@ -91,81 +92,184 @@ def propagation_and_random_search(source_patches, target_patches,
     #############################################
 
     ## PROPAGATION
-    #print(source_patches.shape)
-    #print(f.shape)
-    #print(target_patches.shape)
 
-    x_size = source_patches.shape[0]
-    y_size = source_patches.shape[1]
+    print(random_enabled, propagation_enabled)
 
-    best_D = np.zeros(source_patches.shape)
-    print("sizes", x_size, y_size)
+    #print(best_D)
+    if(not propagation_enabled):
+        x_size = source_patches.shape[0]
+        y_size = source_patches.shape[1]
 
-    for i in range(1, source_patches.shape[0] - 1):
-        for j in range(1, source_patches.shape[1] - 1):
+        if(best_D is None):
+            print("isnone")
+            first = True
+            best_D = np.empty((x_size, y_size)) * np.nan
 
-            #D_original -> D(f(x,y))
-            #D_mod_x    -> D(f(x-1, y)) or D(f(x+1, y))
-            #D_mod_y    -> D(f(x, y-1)) or D(f(x, y+1))
-            #print("F", f[i,j])
-            v = f[i,j]
+        print("sizes", x_size, y_size)
 
-            D_original_i, D_original_j = [i,j] + v
-            # print(D_original_i, D_original_j)
+        for i in range(1, source_patches.shape[0] - 1):
+            for j in range(1, source_patches.shape[1] - 1):
 
-            #if [i,j] + v is out of range - loop around
-            D_original_i, D_original_j = D_original_i %  x_size, D_original_j % y_size
+                #D_original -> D(f(x,y))
+                #D_mod_x    -> D(f(x-1, y)) or D(f(x+1, y))
+                #D_mod_y    -> D(f(x, y-1)) or D(f(x, y+1))
 
-            D_mod_x = None
-            D_mod_y = None
-            D_original = compute_D(source_patches[i,j], target_patches[D_original_i, D_original_j])
 
-            if(odd_iteration):
-                #print("odd")
-                odd_v_x = f[i-1, j]
-                odd_v_y = f[i, j-1] 
+                v = f[i,j]
 
-                D_mod_x = compute_D(source_patches[i,j], target_patches[odd_v_x[0] % x_size, odd_v_x[1] % y_size])
-                D_mod_y = compute_D(source_patches[i,j], target_patches[odd_v_y[0] % x_size, odd_v_y[1] % y_size])
+                D_original_i, D_original_j = [i,j] + v
+                # print(D_original_i, D_original_j)
 
-            else:
-               # print("even")
-                even_v_x = f[i+1, j] % x_size
-                even_v_y = f[i, j+1] % y_size
+                #if [i,j] + v is out of range - loop around
+                if(D_original_i > x_size):
+                    D_original_i += x_size
+                if(D_original_j > y_size):
+                    D_original_j += y_size
+                #D_original_i, D_original_j = D_original_i %  x_size, D_original_j % y_size
 
-                D_mod_x = compute_D(source_patches[i,j], target_patches[even_v_x[0] % x_size, even_v_x[1] % y_size])
-                D_mod_y = compute_D(source_patches[i,j], target_patches[even_v_y[0] % x_size, even_v_y[1] % y_size])
+                D_mod_x = None
+                D_mod_y = None
+                D_original = compute_D(source_patches[i,j], target_patches[D_original_i, D_original_j])
+                
+                #print("D ORIGINAL", D_original)
+                if(odd_iteration):
+                    #print("odd")
+                    odd_v_x = f[i-1, j]
+                    odd_v_y = f[i, j-1] 
 
-            #Update f(x,y) with best of the 3
-            #print("Ds", D_mod_x, D_mod_y, D_original)
-            #target_patches[D_original_i, D_original_j] = np.minimum(D_mod_x, D_mod_y, D_original)
-            best_D[D_original_i, D_original_j] = np.minimum(D_mod_x, D_mod_y, D_original)
-            
-            ## RANDOM SEARCH
-            #alpha - a fixed ratio between search window sizes
-            #w - large, max search radius
+                    D_mod_x = compute_D(source_patches[i,j], target_patches[odd_v_x[0] % x_size, odd_v_x[1] % y_size])
+                    D_mod_y = compute_D(source_patches[i,j], target_patches[odd_v_y[0] % x_size, odd_v_y[1] % y_size])
 
-            k = 0
-            u = [0,0]
-            while (((alpha ** k) * w ) >= 1):
+                else:
+                   # print("even")
+                    even_v_x = f[i+1, j] % x_size
+                    even_v_y = f[i, j+1] % y_size
 
-                #Ri is a uniform random sample from the continuous 2D range.
-                R = [np.random.uniform(-1,1), np.random.uniform(-1,1)]
+                    D_mod_x = compute_D(source_patches[i,j], target_patches[even_v_x[0] % x_size, even_v_x[1] % y_size])
+                    D_mod_y = compute_D(source_patches[i,j], target_patches[even_v_y[0] % x_size, even_v_y[1] % y_size])
 
-                #u vector from equation 1 in section 3.2 in Barnes paper
-                u = f[i,j] + np.multiply(w * (alpha ** k), R)
+                #Update best_D accordingly
 
-                k += 1
+                min_val = min(D_mod_x, D_mod_y, D_original) 
+             
+                #print("BEST_D", best_D[i,j])
+                #print("DDDDDDDDDDDDDDs", D_mod_y, D_mod_x, D_original)
+                #print("MINIMUM RETURN", min_val)
 
-            f[i,j] = u
-           
-    new_f = f
+                #if best_D is nan -> update with it minimum calculated value
+                if(np.isnan(best_D[i,j])):
+                    best_D[i, j] = min_val
+
+                #if min_value isn't nan and less than best_D, update
+                elif(not np.isnan(min_val) and (min_val < best_D[i,j])):
+                    best_D[i, j] = min_val
+
+                #print(updated)
+                #print("BEST D AFTER POTENTIAL UPDATE", best_D[i, j])
+                #print('\n')
+
+
+    ## RANDOM SEARCH ##
+    #alpha - a fixed ratio between search window sizes
+    #w - large, max search radius
+
+
+
+    if(not random_enabled):
+
+        k = int(np.ceil(- np.log10(w)/ np.log10(alpha)))
+
+        radius = (alpha ** k) * w
+
+        for i in range(1, source_patches.shape[0] - 1):
+            for j in range(1, source_patches.shape[1] - 1):
+
+                #initialize exponent k
+                #initialize u
+                u = np.zeros((k, 2))
+
+                distance = []
+
+                for l in range(k - 1):
+                    #Ri is a uniform random sample from the continuous 2D range.
+                    R = [np.random.uniform(-1,1), np.random.uniform(-1,1)]
+
+                    #u vector from equation 1 in section 3.2 in Barnes paper
+                    u[l] = f[i,j] + np.multiply(w * (alpha ** l), R)
+
+                    #handle decimal values for u
+                    u[l] = np.round(u[l])
+
+                    x = int(i + u[l][0])
+                    y = int(j + u[l][1])
+
+                    #compensate for negative indices
+                    if(x < 0):
+                        print(x, "increase x_size")
+                        x += x_size
+                    if(y < 0):
+                        print(y, y_size, "increase y_size")
+                        y += y_size
+                    if(x > x_size):
+                        x = x % x_size
+                        print(x, "x_decrease")
+
+                    if(y > y_size):
+                        y = y % y_size
+                        print(y, "y_ decrease")
+
+                    #print("after", x, y)
+                    new_dist = compute_D(source_patches[i,j], target_patches[x, y])
+                    distance.append(new_dist)
+
+                #assign new_f[i,j] to the most similar u value
+                new_f[i,j] = u[distance.index(min(distance))]
+                print("U", u, f[i,j])
+                #print(new_dist)
+                #print(best_D[D_original_i, D_original_i])
+                #if(new_dist < best_D[D_original_i, D_original_i]):
+                    #print("UPDATING")
+                #    new_f[i,j] = u
+
+
+                ###### OLD LOOP ###### 
+
+                
+                """k = 0                
+                radius = (alpha ** k) * w
+                while (radius >= 1):
+
+                    #Ri is a uniform random sample from the continuous 2D range.
+                    R = [np.random.uniform(-1,1), np.random.uniform(-1,1)]
+
+                    #u vector from equation 1 in section 3.2 in Barnes paper
+                    u = f[i,j] + np.multiply(w * (alpha ** k), R)
+
+                    #handle decimal values for u
+                    u = np.round(u)
+
+                    x = int((i + u[0]) % x_size)
+                    y = int((j + u[1]) % y_size)
+
+                    new_dist = compute_D(source_patches[x,y], target_patches[x,y])
+
+                    #print(new_dist)
+                    #print(best_D[D_original_i, D_original_i])
+                    if(new_dist < best_D[D_original_i, D_original_i]):
+                        #print("UPDATING")
+                        new_f[i,j] = u
+
+                    k += 1
+                    radius = (alpha ** k) * w """ 
+        #print("K and radius", k, radius)
+
 
     #############################################
 
+    #print("end of function best", best_D, new_f)
     return new_f, best_D, global_vars
 
-def compute_D(sourcePatch, destinationPatch):
+def compute_D(source_patch, destination_patch):
 # Calculation of the D value between vector 1 and 2
 # Gonna eventually try all 3 methods
 
@@ -180,7 +284,12 @@ def compute_D(sourcePatch, destinationPatch):
 # Method 3:
 # RMS -> length of vector joining the 2 vectors together
     #return RMS of source and destination 
-    return np.sqrt(np.multiply(sourcePatch, destinationPatch)/destinationPatch.size)
+    #print(source_patch - destination_patch)
+    temp1 = np.ndarray.flatten(source_patch)
+    temp2 = np.ndarray.flatten(destination_patch)
+    #return np.linalg.norm(source_patch - destination_patch)
+    d = temp1 - temp2
+    return np.sum(d) / temp1.shape[0] #np.dot(d, d)
 
 
 # This function uses a computed NNF to reconstruct the source image
@@ -213,18 +322,19 @@ def reconstruct_source_from_target(target, f):
 
     rec_source = np.zeros(target.shape)
 
+    matrix_mapping = make_coordinates_matrix(target.shape, step=1) + f
+
+    print(target.shape[0], f.shape[0])
+
     for i in range(target.shape[0]):
         for j in range(target.shape[1]):
 
-            #new (x,y) from f(i,j) offsets
-            x, y = i + f[i,j,0], j + f[i,j,1]
+            x, y = matrix_mapping[i,j]
 
             #update rec_source with target picture values
             rec_source[i,j] = target[x, y]
 
     #############################################
-
-    print(rec_source)
     return rec_source
 
 

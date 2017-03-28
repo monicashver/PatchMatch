@@ -124,7 +124,7 @@ class PatchMatch:
             success, msg = False, 'Invalid filename provided: ' + filename
         else:
             #Attemp to load image
-            picture = cv.imread(filename, cv.IMREAD_UNCHANGED)
+            picture = cv.imread(filename)
             
             #imread failed
             if (type(picture) == None):
