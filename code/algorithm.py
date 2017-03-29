@@ -102,14 +102,24 @@ def propagation_and_random_search(source_patches, target_patches,
         if(best_D is None):
             best_D = np.empty((x_size, y_size)) * np.nan
 
+        if(odd_iteration):
+            start = 1
+            end_x = source_patches.shape[0]
+            end_y = source_patches.shape[1]
+            offset = -1
+        else:
+            start = 0
+            end_x = source_patches.shape[0] - 1
+            end_y = source_patches.shape[1] - 1
+            offset = 1
 
-        for i in range(source_patches.shape[0]-1):
-            for j in range(source_patches.shape[1]-1):
+        print("START", start, "X", end_x, "Y", end_y, "ODD", odd_iteration)
+        for i in range(start, end_x):
+            for j in range(start, end_y):
 
                 #D_original -> D(f(x,y))
                 #D_mod_x    -> D(f(x-1, y)) or D(f(x+1, y))
                 #D_mod_y    -> D(f(x, y-1)) or D(f(x, y+1))
-
 
                 D_original_i, D_original_j = i + f[i,j,0],  j + f[i,j,1]
 
@@ -117,45 +127,26 @@ def propagation_and_random_search(source_patches, target_patches,
                 D_original_i = np.clip(D_original_i, -x_size, x_size-1)
                 D_original_j = np.clip(D_original_j, -y_size, y_size-1)
 
-
                 D_mod_horizontal = None
                 D_mod_verticle = None
                 D_original = compute_D(source_patches[i,j], target_patches[D_original_i, D_original_j])
                 
-                #print("D ORIGINAL", D_original)
-                if(odd_iteration):
+                v_horizontal = f[i+offset, j]
+                v_verticle   = f[i, j+offset] 
 
-                    #odd verticle and horizontal shifts
-                    odd_v_horizontal = f[i-1, j]
-                    odd_v_verticle   = f[i, j-1] 
+                x_target = np.clip(i + v_horizontal[0], -x_size, x_size-1)
+                y_target = np.clip(i + v_horizontal[1], -y_size, y_size-1)
 
-                    x_target = np.clip(i + odd_v_horizontal[0], -x_size, x_size-1)
-                    y_target = np.clip(i + odd_v_horizontal[1], -y_size, y_size-1)
-                    D_mod_horizontal = compute_D(source_patches[i,j], target_patches[x_target, y_target])
+                D_mod_horizontal = compute_D(source_patches[i,j], target_patches[x_target, y_target])
 
-                    x_target = np.clip(i + odd_v_verticle[0], -x_size, x_size-1)
-                    y_target = np.clip(i + odd_v_verticle[1], -y_size, y_size-1)
-                    D_mod_verticle = compute_D(source_patches[i,j], target_patches[x_target, y_target])
+                x_target = np.clip(i + v_verticle[0], -x_size, x_size-1)
+                y_target = np.clip(i + v_verticle[1], -y_size, y_size-1)
 
-                else:
+                D_mod_verticle = compute_D(source_patches[i,j], target_patches[x_target, y_target])
 
-                    #even verticle and horizontal shifts
-                    even_v_horizontal = f[i+1, j] 
-                    even_v_verticle   = f[i, j+1]
+                # Update best_D accordingly
+                f_offsets = [f[i+offset, j],f[i, j+offset], f[i,j]]
 
-                    x_target = np.clip(i + even_v_horizontal[0], -x_size, x_size-1)
-                    y_target = np.clip(i + even_v_horizontal[1], -y_size, y_size-1)
-                    D_mod_horizontal = compute_D(source_patches[i,j], target_patches[x_target, y_target])
-
-                    x_target = np.clip(i + even_v_verticle[0], -x_size, x_size-1)
-                    y_target = np.clip(i + even_v_verticle[1], -y_size, y_size-1)
-                    D_mod_verticle = compute_D(source_patches[i,j], target_patches[x_target, y_target])
-
-
-
-                #Update best_D accordingly
-                f_odds = [f[i-1, j],f[i, j-1], f[i,j]]
-                f_evens =[f[i+1, j],f[i, j+1], f[i,j]]
                 D = [D_mod_horizontal, D_mod_verticle, D_original]
                 min_val = np.nanmin(D) 
 
