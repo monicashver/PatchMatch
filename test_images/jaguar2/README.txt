@@ -18,13 +18,13 @@ mv ../results/jaguar2/jaguar2.*.npy ../results/jaguar2/jaguar2.init.npy
    the reference-computed NNF as your initial NNF:
 
 cd ../../code
-python viscomp.py --source ../test_images/jaguar2/source.png --target ../test_images/jaguar2/target.png --init-nnf ../results/jaguar2/jaguar2.init.npy -iters 0 --rec-source --output ../results/jaguar2/jaguar2
+python viscomp.py --source ../test_images/jaguar2/source.png --target ../test_images/jaguar2/target.png --init-nnf ../results/jaguar2/jaguar2.init.npy --iters 0 --rec-source --output ../results/jaguar2/jaguar2
 
 3. To run patchmatch with the suggested parameters, your previously-computed
    initial NNF, and all intermediate results:
 
 cd ../../code
-python viscomp.py --source ../test_images/jaguar2/source.jpg --target ../test_images/jaguar2/target.jpg --init-nnf ../results/jaguar2/jaguar2.init.npy -iters 5 --partial-results --nnf-image --nnf-vectors --rec-source --output ../test_images/jaguar2/jaguar2
+python viscomp.py --source ../test_images/jaguar2/source.png --target ../test_images/jaguar2/target.png --init-nnf ../results/jaguar2/jaguar2.init.npy --iters 1 --partial-results --nnf-image --nnf-vectors --rec-source --output ../test_images/jaguar2/jaguar2
 
 The above assumes you have already implemented the 
 reconstruct_source_from_target() function. If you haven't, you should 
