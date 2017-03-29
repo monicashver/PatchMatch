@@ -124,7 +124,7 @@ def propagation_and_random_search(source_patches, target_patches,
                 
                 #print("D ORIGINAL", D_original)
                 if(odd_iteration):
-                    #print("odd")
+
                     #odd verticle and horizontal shifts
                     odd_v_horizontal = f[i-1, j]
                     odd_v_verticle   = f[i, j-1] 
@@ -138,7 +138,8 @@ def propagation_and_random_search(source_patches, target_patches,
                     D_mod_verticle = compute_D(source_patches[i,j], target_patches[x_target, y_target])
 
                 else:
-                   # print("even")
+
+                    #even verticle and horizontal shifts
                     even_v_horizontal = f[i+1, j] 
                     even_v_verticle   = f[i, j+1]
 
@@ -157,99 +158,44 @@ def propagation_and_random_search(source_patches, target_patches,
                 f_evens =[f[i+1, j],f[i, j+1], f[i,j]]
                 D = [D_mod_horizontal, D_mod_verticle, D_original]
                 min_val = np.nanmin(D) 
-                #print(D, min_val)
+
+                #all min values are nan
                 if(np.isnan(min_val)):
                     continue
 
-
                 index = D.index(min_val)
+
                 #if best_D is nan -> update with it minimum calculated value
                 if(np.isnan(best_D[i,j])):
                     best_D[i, j] = min_val
-                    if(odd_iteration):
-                        new_f[i,j] = f_odds[index]
-                    else:
-                        new_f[i,j] = f_evens[index]
-                #if min_value isn't nan and less than best_D, update
-                elif((min_val < best_D[i,j])):
+
+                if((min_val < best_D[i,j])):
                     best_D[i, j] = min_val
-                    if(odd_iteration):
-                        new_f[i,j] = f_odds[index]
-                    else:
-                        new_f[i,j] = f_evens[index]
 
                 ## RANDOM SEARCH ##
-                #initialize u
-                u = np.zeros((k, 2))
-
-                distances = []
 
                 for l in range(k):
                     #Ri is a uniform random sample from the continuous 2D range.
                     R = [np.random.uniform(-x_size,x_size), np.random.uniform(-y_size,y_size)]
 
                     #u vector from equation 1 in section 3.2 in Barnes paper
-                    u[l] = f[i,j] + np.multiply((alpha ** l), R)
+                    u = f[i,j] + np.multiply((alpha ** l), R)
                     
                     #new offset values
-                    x = i + u[l][0]
-                    y = j + u[l][1]
+                    x = i + u[0]
+                    y = j + u[1]
 
                     x = int(np.clip(x, -x_size, x_size-1))
                     y = int(np.clip(y, -y_size, y_size-1))
 
                     new_dist = compute_D(source_patches[i,j], target_patches[x, y])
+
                     if(new_dist < D_original):
-                        new_f[i,j] = u[l]
+                        new_f[i,j] = u
                         D_original = new_dist
-                    #distances.append(new_dist)
-
-                #assign new_f[i,j] to the most similar u value
-                #new_f[i,j] = u[distances.index(min(distances))]
-    # ## RANDOM SEARCH ##
-    # #alpha - a fixed ratio between search window sizes
-    # #w - large, max search radius
-
-    # if(not random_enabled):
-
-    #     #solve for exponent k 
-       
-
-    #     time1 = time.time()
-
-    #     for i in range(1, source_patches.shape[0] - 1):
-    #         for j in range(1, source_patches.shape[1] - 1):
-
-    #             #initialize u
-    #             u = np.zeros((k, 2))
-
-    #             distances = []
-    #             for l in range(k):
-    #                 #Ri is a uniform random sample from the continuous 2D range.
-    #                 R = [np.random.uniform(-x_size,x_size), np.random.uniform(-y_size,y_size)]
-
-    #                 #u vector from equation 1 in section 3.2 in Barnes paper
-    #                 u[l] = f[i,j] + np.multiply((alpha ** l), R)
-                    
-    #                 #new offset values
-    #                 x = i + u[l][0]
-    #                 y = j + u[l][1]
-
-    #                 x = int(np.clip(x, -x_size, x_size-1))
-    #                 y = int(np.clip(y, -y_size, y_size-1))
-
-    #                 new_dist = compute_D(source_patches[i,j], target_patches[x, y])
-    #                 distances.append(new_dist)
-
-    #             #assign new_f[i,j] to the most similar u value
-    #             new_f[i,j] = u[distances.index(min(distances))]
-    #     time2 = time.time()
-
-        #print("K and radius", k, radius)
 
     #############################################
 
-    #print("random_search inner for j loop took:", time2-time1)
     return new_f, best_D, global_vars
 
 def compute_D(source_patch, destination_patch):
