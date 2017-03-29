@@ -103,8 +103,8 @@ def propagation_and_random_search(source_patches, target_patches,
             best_D = np.empty((x_size, y_size)) * np.nan
 
 
-        for i in range(1, source_patches.shape[0] - 1):
-            for j in range(1, source_patches.shape[1] - 1):
+        for i in range(source_patches.shape[0]-1):
+            for j in range(source_patches.shape[1]-1):
 
                 #D_original -> D(f(x,y))
                 #D_mod_x    -> D(f(x-1, y)) or D(f(x+1, y))
