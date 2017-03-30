@@ -180,7 +180,7 @@ def propagation_and_random_search(source_patches, target_patches,
                     D_mod_verticle = np.nan
 
                 # Update best_D accordingly
-                # chec if offset values are ok
+                # check if offset values are ok
                 D = [D_mod_horizontal, D_mod_verticle, D_original]
                 F_s = [v_horizontal, v_verticle, f[i,j]]
                 min_val = np.nanmin(D) 
@@ -190,7 +190,7 @@ def propagation_and_random_search(source_patches, target_patches,
                     continue
 
                 index = D.index(min_val)
-                #new_f[i,j] = F_s[index]
+
                 #if best_D is nan -> update with it minimum calculated value
                 if(best_D[i,j] == min_val):
                     #print("SAME", best_D[i,j], D, index)
@@ -207,10 +207,7 @@ def propagation_and_random_search(source_patches, target_patches,
                     f[i,j] = F_s[index]
                     new_f[i,j] = F_s[index]
                #else:
-                    #print(F_s, D, min_val, best_D[i,j], min_val < best_D[i,j], f[i,j])
-                    #print("BEST_D", best_D[i,j], "D", D, "MIN", min_val, F_s)
 
-                #print("BEST AFTER", best_D[i,j])
 
             ## RANDOM SEARCH ##
             if(not random_enabled):
@@ -226,18 +223,20 @@ def propagation_and_random_search(source_patches, target_patches,
                     x = i + u[0]
                     y = j + u[1]
 
+                    #make sure x and y values are valid
                     x = int(np.clip(x, -x_size, x_size-1))
                     y = int(np.clip(y, -y_size, y_size-1))
 
                     new_dist = compute_D(source_patches[i,j], target_patches[x, y])
-                    #print("NEW DIST", new_dist, "D ORIG", D_original)
+
+                    # if we found a closer value -> update f and original D
                     if(new_dist < D_original):
-                        #print("update NEW")
                         new_f[i,j] = u
+                        #f[i,j] = u
                         D_original = new_dist
 
     #############################################
-    print(best_D == old_D)
+    #print(best_D == old_D)
     print(same_count)
     return new_f, best_D, global_vars
 
@@ -281,17 +280,12 @@ def reconstruct_source_from_target(target, f):
 
     rec_source = np.zeros(target.shape)
 
-    matrix_mapping = make_coordinates_matrix(target.shape, step=1) + f
-
-    print(target.shape[0], f.shape[0])
-
     for i in range(target.shape[0]):
         for j in range(target.shape[1]):
 
-            x, y = matrix_mapping[i,j]
-            x = np.clip(x, -target.shape[0], target.shape[0]-1)
-            y = np.clip(y, -target.shape[1], target.shape[1]-1)
-            #update rec_source with target picture values
+            x = (i + f[i,j,0])
+            y = (j + f[i,j,1]) 
+
             rec_source[i,j] = target[x, y]
 
     #############################################
