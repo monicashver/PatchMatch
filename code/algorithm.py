@@ -14,6 +14,7 @@
 # import basic packages
 import numpy as np
 import time
+np.set_printoptions(threshold=np.inf)
 # basic numpy configuration
 
 # set random seed
@@ -93,34 +94,43 @@ def propagation_and_random_search(source_patches, target_patches,
 
     print(random_enabled, propagation_enabled)
     x_size, y_size = source_patches.shape[0], source_patches.shape[1]
+    old_D = best_D
+    #initialize best_D to a matrix of Nan
+    if(best_D is None):
+        best_D = np.empty((x_size, y_size)) * np.nan
+
+    if(odd_iteration):
+        start_x = 1
+        start_y = 1
+        end_x = source_patches.shape[0] - 2
+        end_y = source_patches.shape[1] - 2
+        offset = 1
+        loop = 1
+    else:
+        start_x = source_patches.shape[0] - 2
+        start_y = source_patches.shape[1] - 2
+        end_x = 0#source_patches.shape[0] - 1
+        end_y = 0#source_patches.shape[1] - 1
+        offset = 1
+        loop = -1
+    #print(start_x, start_y, end_x, end_y, offset, loop)
+    #print("START", start, "X", end_x, "Y", end_y, "ODD", odd_iteration)
     k = int(np.ceil(- np.log10(w)/ np.log10(alpha)))
 
-    if(not propagation_enabled):
+    same_count = 0
+    for i in range(start_x, end_x, loop):
+        for j in range(start_y, end_y, loop):
+            #print(i,j)
 
-        print('propgating')
-        #initialize best_D to a matrix of Nan
-        if(best_D is None):
-            best_D = np.empty((x_size, y_size)) * np.nan
+            ##add check for if we can checks the offsets or not
+            #check
+            #D_original -> D(f(x,y))
+            #D_mod_x    -> D(f(x-1, y)) or D(f(x+1, y))
+            #D_mod_y    -> D(f(x, y-1)) or D(f(x, y+1))
 
-        if(odd_iteration):
-            start = 1
-            end_x = source_patches.shape[0]
-            end_y = source_patches.shape[1]
-            offset = -1
-        else:
-            start = 0
-            end_x = source_patches.shape[0] - 1
-            end_y = source_patches.shape[1] - 1
-            offset = 1
+            #f[i,j]-> [x,y]
 
-        print("START", start, "X", end_x, "Y", end_y, "ODD", odd_iteration)
-        for i in range(start, end_x):
-            for j in range(start, end_y):
-
-                #D_original -> D(f(x,y))
-                #D_mod_x    -> D(f(x-1, y)) or D(f(x+1, y))
-                #D_mod_y    -> D(f(x, y-1)) or D(f(x, y+1))
-
+            if(not propagation_enabled):
                 D_original_i, D_original_j = i + f[i,j,0],  j + f[i,j,1]
 
                 #if [i,j] + v is out of range
@@ -130,47 +140,87 @@ def propagation_and_random_search(source_patches, target_patches,
                 D_mod_horizontal = None
                 D_mod_verticle = None
                 D_original = compute_D(source_patches[i,j], target_patches[D_original_i, D_original_j])
-                
+                #print("\n")
+
+                #print("ORIGINAL", f[i,j], "val", D_original)
+                #print(D_original)
                 v_horizontal = f[i+offset, j]
-                v_verticle   = f[i, j+offset] 
+                v_verticle   = f[i, j+offset]
+                #print("\n") 
+                if(v_horizontal[0] + i < x_size and v_horizontal[1] + j < y_size):
+                    #print("validH")
+                    # x_target = np.clip(i + v_horizontal[0], -x_size, x_size-1)
+                    # y_target = np.clip(i + v_horizontal[1], -y_size, y_size-1)
 
-                x_target = np.clip(i + v_horizontal[0], -x_size, x_size-1)
-                y_target = np.clip(i + v_horizontal[1], -y_size, y_size-1)
+                    x_target = i + v_horizontal[0]  
+                    y_target = j + v_horizontal[1]
+                    #print(i, j)
+                    #print("X target", x_target)
+                    #print("Y target", y_target)
+                    D_mod_horizontal = compute_D(source_patches[i,j], target_patches[x_target, y_target])
+                    #print("HORIZONAL", v_horizontal, "val", D_mod_horizontal)
+                else:
+                    D_mod_horizontal = np.nan
+                if(v_verticle[0] + i < x_size and v_verticle[1] + j < y_size):
+                    #print("validV")
+                    #v_verticle   = f[i, j+offset] 
 
-                D_mod_horizontal = compute_D(source_patches[i,j], target_patches[x_target, y_target])
+                    # x_target = np.clip(i + v_verticle[0], -x_size, x_size-1)
+                    # y_target = np.clip(i + v_verticle[1], -y_size, y_size-1)
 
-                x_target = np.clip(i + v_verticle[0], -x_size, x_size-1)
-                y_target = np.clip(i + v_verticle[1], -y_size, y_size-1)
+                    x_target = i + v_verticle[0]
+                    y_target = j + v_verticle[1]
 
-                D_mod_verticle = compute_D(source_patches[i,j], target_patches[x_target, y_target])
+                    #print(i, j)
+                    #print("X target", x_target)
+                    #print("Y target", y_target)
+                    D_mod_verticle = compute_D(source_patches[i,j], target_patches[x_target, y_target])
+                    #print("VERTICLE",  v_verticle, "val", D_mod_verticle)
+                else:
+                    D_mod_verticle = np.nan
 
                 # Update best_D accordingly
-                f_offsets = [f[i+offset, j],f[i, j+offset], f[i,j]]
-
+                # chec if offset values are ok
                 D = [D_mod_horizontal, D_mod_verticle, D_original]
+                F_s = [v_horizontal, v_verticle, f[i,j]]
                 min_val = np.nanmin(D) 
-
                 #all min values are nan
+
                 if(np.isnan(min_val)):
                     continue
 
                 index = D.index(min_val)
-
+                #new_f[i,j] = F_s[index]
                 #if best_D is nan -> update with it minimum calculated value
+                if(best_D[i,j] == min_val):
+                    #print("SAME", best_D[i,j], D, index)
+                    same_count += 1
                 if(np.isnan(best_D[i,j])):
+                    #print("UPDATED", best_D[i,j], min_val)
                     best_D[i, j] = min_val
+                    f[i,j] = F_s[index]
+                    new_f[i,j] = F_s[index]
 
-                if((min_val < best_D[i,j])):
+                elif(min_val < best_D[i,j]):
+                    #print("UPDATED", best_D[i,j], min_val)
                     best_D[i, j] = min_val
+                    f[i,j] = F_s[index]
+                    new_f[i,j] = F_s[index]
+               #else:
+                    #print(F_s, D, min_val, best_D[i,j], min_val < best_D[i,j], f[i,j])
+                    #print("BEST_D", best_D[i,j], "D", D, "MIN", min_val, F_s)
 
-                ## RANDOM SEARCH ##
+                #print("BEST AFTER", best_D[i,j])
 
+            ## RANDOM SEARCH ##
+            if(not random_enabled):
                 for l in range(k):
+
                     #Ri is a uniform random sample from the continuous 2D range.
-                    R = [np.random.uniform(-x_size,x_size), np.random.uniform(-y_size,y_size)]
+                    R = [np.random.uniform(-1,1), np.random.uniform(-1,1)]
 
                     #u vector from equation 1 in section 3.2 in Barnes paper
-                    u = f[i,j] + np.multiply((alpha ** l), R)
+                    u = f[i,j] + np.multiply((alpha ** l) * w, R)
                     
                     #new offset values
                     x = i + u[0]
@@ -180,13 +230,15 @@ def propagation_and_random_search(source_patches, target_patches,
                     y = int(np.clip(y, -y_size, y_size-1))
 
                     new_dist = compute_D(source_patches[i,j], target_patches[x, y])
-
+                    #print("NEW DIST", new_dist, "D ORIG", D_original)
                     if(new_dist < D_original):
+                        #print("update NEW")
                         new_f[i,j] = u
                         D_original = new_dist
 
     #############################################
-
+    print(best_D == old_D)
+    print(same_count)
     return new_f, best_D, global_vars
 
 def compute_D(source_patch, destination_patch):
@@ -194,7 +246,7 @@ def compute_D(source_patch, destination_patch):
     temp1 = np.ndarray.flatten(source_patch)
     temp2 = np.ndarray.flatten(destination_patch)
 
-    dist = (temp1 - temp2)
+    dist = np.abs(temp1 - temp2)
 
     return dist.dot(dist)
 
